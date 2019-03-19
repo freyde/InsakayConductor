@@ -1,0 +1,107 @@
+{
+  "project_info": {
+    "project_number": "768233361294",
+    "firebase_url": "https://insakay-198614.firebaseio.com",
+    "project_id": "insakay-198614",
+    "storage_bucket": "insakay-198614.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:768233361294:android:cc8e9bd35dcee99d",
+        "android_client_info": {
+          "package_name": "com.example.myqrgenerator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "768233361294-l78pl1uiihamqke0npv2v0m0tlpla6na.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.myqrgenerator",
+            "certificate_hash": "14a504eaf7334f030b593a9ed099b6e4d066f358"
+          }
+        },
+        {
+          "client_id": "768233361294-ftvuojs5f2ltkif3ckidcm065s0tns5r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOMY6cemi94kdwcYpK8UVKDqtJqlGU9hw"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "768233361294-ftvuojs5f2ltkif3ckidcm065s0tns5r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:768233361294:android:15aa2c71e96c556b",
+        "android_client_info": {
+          "package_name": "com.insakay.conductor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "768233361294-obd2qh4murtn80f32n83avpnkeukc5vc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.insakay.conductor",
+            "certificate_hash": "7889ff517decd860f45548ffe319716e8d82a407"
+          }
+        },
+        {
+          "client_id": "768233361294-68ehqda4q8k8is07gl48vknfm5dj7hau.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.insakay.conductor",
+            "certificate_hash": "14a504eaf7334f030b593a9ed099b6e4d066f358"
+          }
+        },
+        {
+          "client_id": "768233361294-ftvuojs5f2ltkif3ckidcm065s0tns5r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOMY6cemi94kdwcYpK8UVKDqtJqlGU9hw"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "768233361294-ftvuojs5f2ltkif3ckidcm065s0tns5r.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

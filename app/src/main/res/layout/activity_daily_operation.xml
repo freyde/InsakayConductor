@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".DailyOperation">
+
+    <include
+        android:id="@+id/toolbarDailyOp"
+        layout="@layout/toolbar_sub"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent" />
+
+    <TextView
+        android:id="@+id/no_file"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@+id/toolbarDailyOp"
+        android:layout_alignTop="@+id/toolbarDailyOp"
+        android:layout_alignBottom="@+id/file_list_view"
+        android:layout_alignParentEnd="true"
+        android:text="@string/no_file"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"/>
+
+
+    <ListView
+        android:id="@+id/file_list_view"
+        android:layout_width="397dp"
+        android:layout_height="673dp"
+        android:layout_below="@+id/toolbarDailyOp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="7dp"
+        android:layout_marginTop="9dp"
+        android:layout_marginEnd="9dp"
+        android:layout_marginBottom="8dp" />
+
+
+
+
+</RelativeLayout>

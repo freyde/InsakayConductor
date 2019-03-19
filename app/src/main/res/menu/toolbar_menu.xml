@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu"
+        android:icon="@drawable/ic_menu_icon"
+        android:title="menu"
+        app:showAsAction="ifRoom">
+
+        <menu>
+
+            <item
+                android:id="@+id/changeBus"
+                android:title="Change Bus"
+                app:showAsAction="never" />
+
+            <item
+                android:id="@+id/dailyOperation"
+                android:title="Daily Operation"
+                app:showAsAction="never" />
+
+            <item
+                android:id="@+id/viewFiles"
+                android:title="Verified Codes"
+                app:showAsAction="never" />
+
+            <item
+                android:id="@+id/logout"
+                android:title="Logout"
+                app:showAsAction="never" />
+
+        </menu>
+
+
+    </item>
+
+</menu>

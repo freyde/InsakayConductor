@@ -1,0 +1,68 @@
+<resources>
+    <string name="app_name">Insakay-Conductor</string>
+    <string name="title_activity_login">Sign in</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_phone">Phone</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="error_invalid_email">This email address is invalid</string>
+    <string name="error_invalid_password">This password is too short</string>
+    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_field_required">This field is required</string>
+    <string name="permission_rationale">"Contacts permissions are needed for providing email completions."</string>
+    <string name="unregister_phone">Unregistered phone number</string>
+    <string name="unregistered_bus">Unregistered bus</string>
+    <string name="already_logged_in">Conductor already logged in on other android phone</string>
+
+    <!--Navbar Strings -->
+    <string name="nav_scan">Scan</string>
+    <string name="nav_mylocation">Location</string>
+    <string name="nav_markings">Markings</string>
+
+    <!-- Strings related to QR -->
+    <string name="qr_scan_title">QR Ticket</string>
+    <string name="qr_scan">Scan</string>
+    <string name="qr_scan_manual">Manual</string>
+    <string name="qr_scan_manual_ticketing">Manual Ticketing</string>
+
+
+    <string name="Bus_ID">Bus ID</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_maps">Map</string>
+
+
+    <!--Strings related to Sign Out -->
+    <string name="sign_out_title">Sign Out</string>
+    <string name="sign_out_message">Are you sure you want to sign out your account?</string>
+    <string name="sign_out">Sign out</string>
+
+    <!-- Strings related to Change Bus -->
+    <string name="change_bus_title">Change Bus</string>
+    <string name="change_bus_success">Change Successful!</string>
+    <string name="change_bus_error_incorrect_password">Change failed. Incorrect password. Please try again.</string>
+    <string name="change_bus_error_unregistered_bus">Change failed. Unregistered Bus. Please try again.</string>
+    <string name="change_bus_error_same_bus">Change failed. Same Bus ID. Please try again.</string>
+
+    <!-- Strings related to Markings -->
+    <string name="no_markings">No Markings</string>
+
+    <!-- String related to Daily Operation -->
+    <string name="daily_operation_title">Daily Operation</string>
+    <string name="daily_operation_conductor_id">Conductor ID:</string>
+    <string name="daily_operation_conductor">Conductor:</string>
+    <string name="daily_operation_operator">Operator:</string>
+    <string name="daily_operation_operator_id">Operator ID:</string>
+    <string name="daily_operation_bus_id">Operator ID:</string>
+
+
+    <!-- Miscellaneous -->
+    <string name="proceed">Proceed</string>
+    <string name="cancel">Cancel</string>
+    <string name="no_file">No File</string>
+    <string name="file_options">File Options</string>
+    <string name="enter_key">Enter key</string>
+</resources>
