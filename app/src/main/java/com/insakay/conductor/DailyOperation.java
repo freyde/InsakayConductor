@@ -152,7 +152,5 @@ public class DailyOperation extends AppCompatActivity {
             }
         }
         filesAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, dateName);
-
-
     }
 }

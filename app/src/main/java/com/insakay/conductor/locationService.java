@@ -46,15 +46,15 @@ public class locationService extends Service {
 
                 if(location != null && conductorID != "" && loggedIn) {
                     //Update Location On Firebase
-                    //Prepare Datas
 
+                    //Prepare Datas
                     coordinate.put("lat", Double.toString(location.getLatitude()));
                     coordinate.put("long", Double.toString(location.getLongitude()));
                     coordinate.put("conductorID", conductorID);
                     coordinate.put("operatorID", operatorID);
                     coordinate.put("busID", busID);
 
-                    //Initialize Firebase
+                    //Initialize Firebase and Update
                     FirebaseDatabase.getInstance().getReference("onOperation/" + conductorID).setValue(coordinate);
                 }
             }
