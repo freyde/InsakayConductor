@@ -18,6 +18,7 @@
         android:smallScreens="true"
         android:xlargeScreens="true" />
 
+
     <application
         android:name=".LocationUpdater"
         android:allowBackup="true"

@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
@@ -23,13 +24,20 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import org.w3c.dom.Text;
+
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 
 /**
@@ -39,11 +47,13 @@ public class ManualTicket extends DialogFragment {
 
     private View view;
     private Spinner routeSpinner, originSpinner, destinationSpinner;
-    private ArrayList<String> routeList, landmarksList;
+    private List<String> routeList, landmarksList;
     private ArrayAdapter<String> routeAdapter, landmarksAdapter;
-    private HashMap<String, String> routeHash, landmarksHash;
-    private String UID, operator, route, origin, destination, curDate, fileName, content, uid;
+    private HashMap<String, String> routeHash, landmarksHash, landmarksCov;
+//    private String[] routeArr, landmarkArr;
+    private String UID, operator, route, origin, destination, curDate, fileName, content, uid, routeID, originCov, destinationCov;
     private Boolean found;
+    private TextView fareView;
 
 
     @NonNull
@@ -57,19 +67,20 @@ public class ManualTicket extends DialogFragment {
         routeSpinner = (Spinner) view.findViewById(R.id.spinner_route);
         originSpinner = (Spinner) view.findViewById(R.id.spinner_origin);
         destinationSpinner = (Spinner) view.findViewById(R.id.spinner_destination);
+        fareView = (TextView) view.findViewById(R.id.fareView);
 
 
-
-        routeList = new ArrayList<String>();
+        routeList = new ArrayList<>();
         routeHash = new HashMap<String, String>();
-        landmarksList = new ArrayList<String>();
+        landmarksList = new ArrayList<>();
         landmarksHash = new HashMap<String, String>();
+        landmarksCov = new HashMap<String, String>();
 
         UID = SaveSharedPreference.getOpUID(getActivity().getApplicationContext());
 
         updateRoutes();
-        landmarksList.add("Select Landmark");
 
+        landmarksList.add("Select Landmark");
 
         routeAdapter = new ArrayAdapter<String>(getActivity().getBaseContext(), android.R.layout.simple_spinner_item, routeList);
         routeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -87,12 +98,14 @@ public class ManualTicket extends DialogFragment {
         routeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                fareView.setText("");
+                landmarksList.clear();
+                landmarksList.add("Select Landmark");
                 String route = parent.getItemAtPosition(position).toString();
                 found = false;
                 if(!route.equals("Select Route")) {
                     String routeID = routeHash.get(route);
-                    landmarksList.clear();
-                    landmarksList.add("Select Landmark");
+
                     FirebaseDatabase.getInstance().getReference("users/" + UID + "/landmarks/" + routeID)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
@@ -100,10 +113,12 @@ public class ManualTicket extends DialogFragment {
                                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                                         String name = snapshot.child("landmarkName").getValue().toString();
                                         String id = snapshot.child("landmarkID").getValue().toString();
+                                        String cov = snapshot.child("coverage").getValue().toString();
                                         landmarksList.add(name);
                                         landmarksHash.put(name, id);
-                                        System.out.println(snapshot);
+                                        landmarksCov.put(name, cov);
                                     }
+                                    Collections.sort(landmarksList.subList(1, landmarksList.size()));
                                     landmarksAdapter.notifyDataSetChanged();
                                 }
 
@@ -118,6 +133,78 @@ public class ManualTicket extends DialogFragment {
                 } else {
                     originSpinner.setEnabled(false);
                     destinationSpinner.setEnabled(false);
+                    landmarksAdapter.notifyDataSetChanged();
+                    landmarksList.add("Select Landmark");
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        originSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                route = routeSpinner.getSelectedItem().toString();
+                destination = destinationSpinner.getSelectedItem().toString();
+                origin = parent.getItemAtPosition(position).toString();
+                if(!destination.equals("Select Landmark")) {
+                    routeID = routeHash.get(route);
+                    originCov = landmarksCov.get(origin);
+                    destinationCov = landmarksCov.get(destination);
+                    FirebaseDatabase.getInstance().getReference("users/"+ UID +"/fares/"+ routeID +"/matrix/"+ originCov)
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    System.out.println(dataSnapshot);
+                                    System.out.println(destinationCov);
+                                    String fare = dataSnapshot.child(destinationCov).getValue().toString();
+                                    System.out.println(fare);
+                                    fareView.setText("Fare: Php. " + fare);
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                }
+                            });
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        destinationSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                route = routeSpinner.getSelectedItem().toString();
+                origin = originSpinner.getSelectedItem().toString();
+                destination = parent.getItemAtPosition(position).toString();
+                if(!destination.equals("Select Landmark")) {
+                    routeID = routeHash.get(route);
+                    originCov = landmarksCov.get(origin);
+                    destinationCov = landmarksCov.get(destination);
+                    FirebaseDatabase.getInstance().getReference("users/"+ UID +"/fares/"+ routeID +"/matrix/"+ originCov)
+                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                System.out.println(dataSnapshot);
+                                System.out.println(destinationCov);
+                                String fare = dataSnapshot.child(destinationCov).getValue().toString();
+                                System.out.println(fare);
+                                fareView.setText("Fare: Php. " + fare);
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        });
                 }
             }
 
@@ -138,7 +225,6 @@ public class ManualTicket extends DialogFragment {
                         destination = destinationSpinner.getSelectedItem().toString();
                         final Activity activity = getActivity();
                         if(!route.equals("Select Route") && !origin.equals("Select Landmark") && !destination.equals("Select Landmark")) {
-                            uid = SaveSharedPreference.getOpUID(getActivity().getApplicationContext());
                             SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yy");
                             curDate = dateFormat.format(new Date());
                             String conductorID = SaveSharedPreference.getConductorID(getActivity().getApplicationContext());
@@ -147,34 +233,70 @@ public class ManualTicket extends DialogFragment {
                             dateFormat = new SimpleDateFormat("MM.dd.yy");
                             curDate = dateFormat.format(new Date());
 
-                            FirebaseDatabase.getInstance().getReference("users/" + uid + "/info")
-                                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                            FirebaseDatabase.getInstance().getReference("users/" + UID + "/info")
+                                .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    operator = dataSnapshot.child("shortName").getValue().toString();
+                                    content = operator.concat(", ").concat(route).concat(", ").concat(origin).concat(", ").concat(destination).concat(", ").concat(curDate).concat("\n");
 
-                                        @Override
-                                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                            operator = dataSnapshot.child("shortName").getValue().toString();
-                                            content = operator.concat(", ").concat(route).concat(", ").concat(origin).concat(", ").concat(destination).concat(", ").concat(curDate).concat("\n");
+                                    FirebaseDatabase.getInstance().getReference("users/" + UID + "/landmarks/" + routeID)
+                                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                                @Override
+                                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                                    System.out.println("Landmarks "+ dataSnapshot);
+                                                    for(DataSnapshot marks : dataSnapshot.getChildren()) {
+                                                        if(destination.equals(marks.child("landmarkName").getValue())) {
+                                                            System.out.println(destination +" "+ marks.child("landmarkName").getValue());
+                                                            String path = getActivity().getFilesDir().getPath();
+                                                            File a = new File(path, "destinationList"+ fileName);
+                                                            if(!a.exists()) {
 
-                                            try {
-                                                FileOutputStream fos = activity.openFileOutput(fileName, Context.MODE_APPEND);
-                                                System.out.println(content);
-                                                System.out.println(fileName);
-                                                fos.write(content.getBytes());
-                                                fos.flush();
-                                                fos.close();
-                                                Toast.makeText(activity, "Manual Ticketing Successful!", Toast.LENGTH_SHORT).show();
-                                            } catch (FileNotFoundException e) {
-                                                e.printStackTrace();
-                                            } catch (IOException e) {
-                                                e.printStackTrace();
-                                            }
-                                        }
+                                                            } else {
 
-                                        @Override
-                                        public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                                        }
-                                    });
+                                                                try {
+                                                                    FileOutputStream fos = activity.openFileOutput("destinationList-" + fileName, Context.MODE_APPEND);
+                                                                    String content = origin + " " + destination + ", " + marks.child("coordinate").child("lat").getValue().toString() + ", " + marks.child("coordinate").child("lng").getValue().toString();
+                                                                    fos.write(content.getBytes());
+                                                                    fos.flush();
+                                                                    fos.close();
+                                                                } catch (FileNotFoundException e) {
+                                                                    e.printStackTrace();
+                                                                } catch (IOException e) {
+                                                                    e.printStackTrace();
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+
+                                                @Override
+                                                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                                }
+                                            });
+
+                                    try {
+                                        FileOutputStream fos = activity.openFileOutput(fileName, Context.MODE_APPEND);
+                                        fos.write(content.getBytes());
+                                        fos.flush();
+                                        fos.close();
+                                        Toast.makeText(activity, "Manual Ticketing Successful!", Toast.LENGTH_SHORT).show();
+                                    } catch (FileNotFoundException e) {
+                                        e.printStackTrace();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+
+
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                }
+                                });
                         } else {
                             Toast.makeText(activity, "Manual Ticketing Failed. Please check your input.", Toast.LENGTH_SHORT).show();
                         }
@@ -197,7 +319,6 @@ public class ManualTicket extends DialogFragment {
             .addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-
                     for(DataSnapshot snapshot : dataSnapshot.getChildren()) {
                         String name = snapshot.child("routeName").getValue().toString();
 //                        String key = snapshot.getKey();
@@ -205,9 +326,8 @@ public class ManualTicket extends DialogFragment {
                         routeList.add(name);
                         routeHash.put(name, id);
 //                        routeKeys.put(name, key);
-                        System.out.println(snapshot);
                     }
-                    System.out.println();
+                    Collections.sort(routeList.subList(1, routeList.size()));
                     routeAdapter.notifyDataSetChanged();
                 }
 

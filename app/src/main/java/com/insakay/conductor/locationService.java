@@ -1,6 +1,9 @@
 package com.insakay.conductor;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -8,11 +11,15 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.firebase.database.FirebaseDatabase;
@@ -21,15 +28,22 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class locationService extends Service {
+    public static final String CHANNEL_1_ID = "channel";
     private LocationManager locationManager;
     private LocationListener locationListener;
     private String conductorID, busID, operatorID;
     private Boolean loggedIn;
     private HashMap<String, String> coordinate = new HashMap<String, String>();
+    private NotificationManagerCompat notificationManager;
 
     @Override
     public void onCreate() {
         super.onCreate();
+
+        createNotificationChannel();
+
+        notificationManager = NotificationManagerCompat.from(getApplicationContext());
+
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
             @Override
@@ -56,6 +70,8 @@ public class locationService extends Service {
 
                     //Initialize Firebase and Update
                     FirebaseDatabase.getInstance().getReference("onOperation/" + conductorID).setValue(coordinate);
+
+//                    sendNotification();
                 }
             }
 
@@ -88,7 +104,7 @@ public class locationService extends Service {
             return;
         }
 
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, locationListener);
 
     }
 
@@ -114,5 +130,51 @@ public class locationService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return null;
+    }
+
+    private void createNotificationChannel() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_1_ID,
+                    "Embark Notification",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("Notify Passenger!");
+
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel);
+        }
+    }
+
+    public void sendNotification() {
+        Notification notification = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_1_ID)
+                .setSmallIcon(R.drawable.ic_notify)
+                .setContentTitle("Embark Notification")
+                .setContentText("A passenger need to embark.")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
+                .build();
+
+        notificationManager.notify(1, notification);
+    }
+
+    public Double getDistance(Double[] origin, Double[] destination) {
+        // return distance in meters
+        Double lon1 = toRadian(origin[1]);
+        Double lat1 = toRadian(origin[0]);
+        Double lon2 = toRadian(destination[1]);
+        Double lat2 = toRadian(destination[0]);
+
+        Double deltaLat = lat2 - lat1;
+        Double deltaLon = lon2 - lon1;
+
+        Double a = Math.pow(Math.sin(deltaLat/2), 2) + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(deltaLon/2), 2);
+        Double c = 2 * Math.asin(Math.sqrt(a));
+        Double EARTH_RADIUS = 6371D;
+        return c * EARTH_RADIUS * 1000;
+    }
+
+    public Double toRadian(Double degree) {
+        return degree*Math.PI/180;
     }
 }

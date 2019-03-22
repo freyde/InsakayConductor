@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import java.util.Set;
+
 public class SaveSharedPreference {
 
     private static SharedPreferences getSharedPreferences(Context context) {

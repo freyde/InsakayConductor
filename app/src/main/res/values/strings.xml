@@ -65,4 +65,20 @@
     <string name="no_file">No File</string>
     <string name="file_options">File Options</string>
     <string name="enter_key">Enter key</string>
+
+
+    <string-array name="test">
+        <item>a</item>
+        <item>a</item>
+        <item>a</item>
+        <item>a</item>
+        <item>a</item>
+        <item>a</item>
+        <item>a</item>
+        <item>a</item>
+        <item>a</item>
+
+
+
+    </string-array>
 </resources>
