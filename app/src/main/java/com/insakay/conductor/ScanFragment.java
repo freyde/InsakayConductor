@@ -41,7 +41,8 @@ public class ScanFragment extends Fragment {
     private View mView;
     private Button scan, manual;
     private ManualTicket manualTicketFragment;
-
+    private AESencrp decryptor;
+    private String contents;
     public ScanFragment() {
         // Required empty public constructor
     }
@@ -87,44 +88,109 @@ public class ScanFragment extends Fragment {
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         final IntentResult result = IntentIntegrator.parseActivityResult(requestCode,resultCode,data);
-        final String contents = result.getContents();
-        if (result!=null && result.getContents()!=null) {
-            new AlertDialog.Builder(getActivity())
-                .setTitle("Ticket Information")
-                .setMessage(contents)
-                .setPositiveButton("Verify", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yy");
-                        String curDate = dateFormat.format(new Date());
-                        String conductorID = SaveSharedPreference.getConductorID(getActivity().getApplicationContext());
-                        String fileName = conductorID.concat("_").concat(curDate).concat(".sky");
-                        String newContents ="";
-                        try {
-                            String root = getActivity().getFilesDir().getPath();
-                            if(new File(root, fileName).exists()) {
-                                newContents = "\n".concat(contents.replace(".", ", "));
-                            } else {
-                                newContents = contents.replace(".", ", ");
+//        contents = "";
+        try {
+            contents = decryptor.decrypt(result.getContents());
+            if (result!=null && result.getContents()!=null) {
+                final SimpleDateFormat dateFormat = new SimpleDateFormat("MM_dd_yy");
+                final String curDate = dateFormat.format(new Date());
+                final String[] infos = contents.split("\\.");
+                System.out.println(contents);
+                if(infos.length > 1) {
+                    System.out.println(infos[5] +"_"+ curDate);
+                    if(infos[5].equals(curDate)) {
+                        String p;
+                        if(infos[7].equals("Exact"))
+                            p = infos[7];
+                        else
+                            p = infos[7] + "php";
+                        new AlertDialog.Builder(getActivity())
+                                .setTitle("Ticket Information")
+                                .setMessage(
+                                        "Operator: "+ infos[1] +
+                                        "\nRoute: "+ infos[2] +
+                                        "\nOrigin: "+ infos[3] +
+                                        "\nDestination: "+ infos[4] +
+                                        "\nFare: "+ infos[6] +" php"+
+                                        "\nPayment: "+ p +
+                                        "\nChange: "+ infos[8] +" php"
+                                )
+                                .setPositiveButton("Verify", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        String conductorID = SaveSharedPreference.getConductorID(getActivity().getApplicationContext());
+                                        String fileName = conductorID.concat("_").concat(curDate).concat(".sky");
+                                        String newContents ="";
+                                        try {
+                                            String root = getActivity().getFilesDir().getPath();
+                                            if(new File(root, fileName).exists()) {
+                                                newContents = "\n".concat(infos[1] +", "+ infos[2] +", "+ infos[3] +", "+ infos[4] +", "+ infos[6]);
+                                            } else {
+                                                newContents = infos[1] +", "+ infos[2] +", "+ infos[3] +", "+ infos[4] +", "+ infos[6];
+                                            }
+                                            FileOutputStream fos = getActivity().openFileOutput(fileName, Context.MODE_APPEND);
+                                            fos.write(newContents.getBytes());
+                                            fos.flush();
+                                            fos.close();
+                                            Toast.makeText(getContext(), "QR Verified", Toast.LENGTH_LONG).show();
+                                        } catch (FileNotFoundException e) {
+                                            e.printStackTrace();
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+
+
+                                    }
+                                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
                             }
-                            FileOutputStream fos = getActivity().openFileOutput(fileName, Context.MODE_APPEND);
-                            fos.write(newContents.getBytes());
-                            fos.flush();
-                            fos.close();
-                            Toast.makeText(getContext(), "QR Verified", Toast.LENGTH_LONG).show();
-                        } catch (FileNotFoundException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        }).create().show();
+                    } else {
+                        new AlertDialog.Builder(getActivity())
+                                .setTitle("Error")
+                                .setMessage("Outdated QR Code")
+                                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                })
+                                .create()
+                                .show();
                     }
-                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
+                } else if(infos[0].equals("Insakay")) {
+                    new AlertDialog.Builder(getActivity())
+                            .setTitle("Insakay")
+                            .setMessage("Thank you for using insakay!!")
+                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            })
+                            .create()
+                            .show();
                 }
-            }).create().show();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            new AlertDialog.Builder(getActivity())
+                    .setTitle("Error")
+                    .setMessage("Invalid QR Code")
+                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    })
+                    .create()
+                    .show();
         }
+
+        System.out.println(contents);
+
         super.onActivityResult(requestCode, resultCode, data);
     }
 

@@ -60,8 +60,9 @@ public class MarkingsFragment extends Fragment {
 
             File a = new File(path, fileName);
             if(a.exists()) {
-                FileInputStream fis = getActivity().openFileInput(fileName);
-                BufferedReader lineCounter = new BufferedReader(new InputStreamReader(fis));
+                BufferedReader lineCounter = new BufferedReader(
+                                                new InputStreamReader(
+                                                    getActivity().openFileInput(fileName)));
                 String temp;
 
                 while ((temp = lineCounter.readLine()) != null) {
@@ -69,7 +70,6 @@ public class MarkingsFragment extends Fragment {
                         arrLength++;
                 }
                 lineCounter.close();
-                fis.close();
                 String line;
 
                 landmarkNames = new String[arrLength];

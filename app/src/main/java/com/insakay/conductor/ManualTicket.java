@@ -26,10 +26,13 @@ import com.google.firebase.database.ValueEventListener;
 
 import org.w3c.dom.Text;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -251,14 +254,38 @@ public class ManualTicket extends DialogFragment {
                                                             String path = getActivity().getFilesDir().getPath();
                                                             File a = new File(path, "destinationList"+ fileName);
                                                             if(!a.exists()) {
-
-                                                            } else {
-
-
                                                                 try {
-                                                                    FileOutputStream fos = activity.openFileOutput("destinationList-" + fileName, Context.MODE_APPEND);
-                                                                    String content = origin + " " + destination + ", " + marks.child("coordinate").child("lat").getValue().toString() + ", " + marks.child("coordinate").child("lng").getValue().toString();
+                                                                    FileOutputStream fos = activity.openFileOutput("destinationList-" + fileName, Context.MODE_PRIVATE);
+                                                                    String content = destination +", "+ marks.child("coordinate").child("lat").getValue().toString() +", "+ marks.child("coordinate").child("lng").getValue().toString() +", 1";
                                                                     fos.write(content.getBytes());
+                                                                    fos.flush();
+                                                                    fos.close();
+                                                                } catch (FileNotFoundException e) {
+                                                                    e.printStackTrace();
+                                                                } catch (IOException e) {
+                                                                    e.printStackTrace();
+                                                                }
+                                                            } else {
+                                                                Boolean found = false;
+                                                                HashMap<String, String> map = new HashMap<String, String>();
+                                                                try {
+                                                                    BufferedReader reader = new BufferedReader(
+                                                                                                new InputStreamReader(
+                                                                                                        activity.openFileInput(fileName)));
+                                                                    String line = "";
+                                                                    while ((line = reader.readLine()) != null) {
+                                                                        String[] info = line.split("=");
+                                                                        map.put(info[0], info[1]);
+                                                                        if(info[0].equals(destination)) {
+                                                                            int c = Integer.parseInt(info[1]) + 1;
+                                                                            map.put(info[0], Integer.toString(c));
+
+                                                                        }
+                                                                    }
+                                                                    FileOutputStream fos = activity.openFileOutput("destinationList-" + fileName, Context.MODE_PRIVATE);
+                                                                    for(Object dest : map.entrySet()) {
+                                                                        fos.write(dest.toString().getBytes());
+                                                                    }
                                                                     fos.flush();
                                                                     fos.close();
                                                                 } catch (FileNotFoundException e) {
