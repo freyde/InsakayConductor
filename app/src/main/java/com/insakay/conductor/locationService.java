@@ -24,16 +24,28 @@ import android.widget.Toast;
 
 import com.google.firebase.database.FirebaseDatabase;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class locationService extends Service {
     public static final String CHANNEL_1_ID = "channel";
     private LocationManager locationManager;
     private LocationListener locationListener;
-    private String conductorID, busID, operatorID;
-    private Boolean loggedIn;
+    private String conductorID, busID, operatorID, fileName;
+    private Boolean loggedIn, updated;
     private HashMap<String, String> coordinate = new HashMap<String, String>();
+    private List<String> markingsList = new ArrayList<String>();
     private NotificationManagerCompat notificationManager;
 
     @Override
@@ -58,6 +70,8 @@ public class locationService extends Service {
                 conductorID = SaveSharedPreference.getConductorID(getApplicationContext());
                 loggedIn = SaveSharedPreference.isLoggedIn(getApplicationContext());
 
+                fileName = setFileName();
+
                 if(location != null && conductorID != "" && loggedIn) {
                     //Update Location On Firebase
 
@@ -71,7 +85,47 @@ public class locationService extends Service {
                     //Initialize Firebase and Update
                     FirebaseDatabase.getInstance().getReference("onOperation/" + conductorID).setValue(coordinate);
 
+                    updated = false;
+                    markingsList.clear();
+                    String path = getFilesDir().getPath();
+                    File a = new File(path, "destinationList-"+ fileName);
+                    FileInputStream fis2 = null;
+                    if(a.exists()) {
+                        try {
+                            fis2 = openFileInput("destinationList-"+ fileName);
+                            BufferedReader reader = new BufferedReader(new InputStreamReader(fis2));
+                            String line = "";
+                            while ((line = reader.readLine()) != null) {
+                                String[] main = line.split("=");
+                                String[] datas = main[0].split("_");
+                                Double[] curLoc = new Double[]{location.getLatitude(), location.getLongitude()};
+                                Double[] marking = new Double[]{Double.parseDouble(datas[2]), Double.parseDouble(datas[3])};
+                                if (getDistance(curLoc, marking) <= 50D) {
+                                    sendNotification();
+                                    updated = true;
+                                } else {
+                                    markingsList.add(line);
+                                }
+                            }
+                            reader.close();
+                            System.out.println("Len: "+ markingsList.size());
+                            if(updated) {
+                                FileOutputStream clear = openFileOutput("destinationList-" + fileName, Context.MODE_PRIVATE);
+                                clear.close();
+                                FileOutputStream fos = openFileOutput("destinationList-" + fileName, Context.MODE_APPEND);
+                                for (String m : markingsList) {
+                                    fos.write(m.concat("\n").getBytes());
+                                }
+                                fos.flush();
+                                fos.close();
+                            }
+                        } catch (FileNotFoundException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 //                    sendNotification();
+                    }
                 }
             }
 
@@ -176,5 +230,11 @@ public class locationService extends Service {
 
     public Double toRadian(Double degree) {
         return degree*Math.PI/180;
+    }
+
+    private String setFileName() {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM_dd_yy");
+        String date = dateFormat.format(new Date());
+        return SaveSharedPreference.getConductorID(getApplicationContext()).concat("_").concat(date).concat(".sky");
     }
 }

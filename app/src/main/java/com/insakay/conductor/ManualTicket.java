@@ -6,9 +6,11 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -54,7 +56,7 @@ public class ManualTicket extends DialogFragment {
     private ArrayAdapter<String> routeAdapter, landmarksAdapter;
     private HashMap<String, String> routeHash, landmarksHash, landmarksCov;
 //    private String[] routeArr, landmarkArr;
-    private String UID, operator, route, origin, destination, curDate, fileName, content, uid, routeID, originCov, destinationCov;
+    private String UID, operator, route, origin, destination, curDate, fileName, content, routeID, originCov, destinationCov, fare, markContent, coverage;
     private Boolean found;
     private TextView fareView;
 
@@ -198,7 +200,7 @@ public class ManualTicket extends DialogFragment {
                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                 System.out.println(dataSnapshot);
                                 System.out.println(destinationCov);
-                                String fare = dataSnapshot.child(destinationCov).getValue().toString();
+                                fare = dataSnapshot.child(destinationCov).getValue().toString();
                                 System.out.println(fare);
                                 fareView.setText("Fare: Php. " + fare);
                             }
@@ -228,36 +230,34 @@ public class ManualTicket extends DialogFragment {
                         destination = destinationSpinner.getSelectedItem().toString();
                         final Activity activity = getActivity();
                         if(!route.equals("Select Route") && !origin.equals("Select Landmark") && !destination.equals("Select Landmark")) {
-                            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yy");
+                            SimpleDateFormat dateFormat = new SimpleDateFormat("MM_dd_yy");
                             curDate = dateFormat.format(new Date());
                             String conductorID = SaveSharedPreference.getConductorID(getActivity().getApplicationContext());
                             fileName = conductorID.concat("_").concat(curDate).concat(".sky");
-
-                            dateFormat = new SimpleDateFormat("MM.dd.yy");
-                            curDate = dateFormat.format(new Date());
 
                             FirebaseDatabase.getInstance().getReference("users/" + UID + "/info")
                                 .addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                     operator = dataSnapshot.child("shortName").getValue().toString();
-                                    content = operator.concat(", ").concat(route).concat(", ").concat(origin).concat(", ").concat(destination).concat(", ").concat(curDate).concat("\n");
+                                    content = operator.concat(", ").concat(route).concat(", ").concat(origin).concat(", ").concat(destination).concat(", ").concat(fare);
 
                                     FirebaseDatabase.getInstance().getReference("users/" + UID + "/landmarks/" + routeID)
                                             .addListenerForSingleValueEvent(new ValueEventListener() {
+                                                @RequiresApi(api = Build.VERSION_CODES.N)
                                                 @Override
                                                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                                                    System.out.println("Landmarks "+ dataSnapshot);
                                                     for(DataSnapshot marks : dataSnapshot.getChildren()) {
                                                         if(destination.equals(marks.child("landmarkName").getValue())) {
-                                                            System.out.println(destination +" "+ marks.child("landmarkName").getValue());
-                                                            String path = getActivity().getFilesDir().getPath();
-                                                            File a = new File(path, "destinationList"+ fileName);
+                                                            String path = activity.getFilesDir().getPath();
+                                                            File a = new File(path, "destinationList-"+ fileName);
+                                                            coverage = marks.child("coverage").getValue().toString();
+                                                            markContent = destination +"_"+ coverage +"_"+ marks.child("coordinate").child("lat").getValue().toString() +"_"+ marks.child("coordinate").child("lng").getValue().toString() +"=1";
                                                             if(!a.exists()) {
+                                                                System.out.println("Wala pa!");
                                                                 try {
-                                                                    FileOutputStream fos = activity.openFileOutput("destinationList-" + fileName, Context.MODE_PRIVATE);
-                                                                    String content = destination +", "+ marks.child("coordinate").child("lat").getValue().toString() +", "+ marks.child("coordinate").child("lng").getValue().toString() +", 1";
-                                                                    fos.write(content.getBytes());
+                                                                    FileOutputStream fos = activity.openFileOutput("destinationList-" + fileName, Context.MODE_APPEND);
+                                                                    fos.write(markContent.getBytes());
                                                                     fos.flush();
                                                                     fos.close();
                                                                 } catch (FileNotFoundException e) {
@@ -266,28 +266,51 @@ public class ManualTicket extends DialogFragment {
                                                                     e.printStackTrace();
                                                                 }
                                                             } else {
+                                                                System.out.println("Meron na!");
                                                                 Boolean found = false;
                                                                 HashMap<String, String> map = new HashMap<String, String>();
                                                                 try {
                                                                     BufferedReader reader = new BufferedReader(
                                                                                                 new InputStreamReader(
-                                                                                                        activity.openFileInput(fileName)));
-                                                                    String line = "";
+                                                                                                        activity.openFileInput("destinationList-"+ fileName)));
+                                                                    String line = "", key="";
+                                                                    int c = 0;
                                                                     while ((line = reader.readLine()) != null) {
                                                                         String[] info = line.split("=");
-                                                                        map.put(info[0], info[1]);
-                                                                        if(info[0].equals(destination)) {
-                                                                            int c = Integer.parseInt(info[1]) + 1;
-                                                                            map.put(info[0], Integer.toString(c));
+                                                                        if(info.length > 1) {
+                                                                            System.out.println("Array: "+ info[0]);
+                                                                            String[] r = info[0].split("_");
+                                                                            if(r[0].equals(destination)) {
+                                                                                found = true;
+                                                                                key = info[0];
+                                                                                c = Integer.parseInt(info[1]) + 1;
 
+                                                                            }
+                                                                            map.put(info[0], info[1]);
                                                                         }
                                                                     }
-                                                                    FileOutputStream fos = activity.openFileOutput("destinationList-" + fileName, Context.MODE_PRIVATE);
-                                                                    for(Object dest : map.entrySet()) {
-                                                                        fos.write(dest.toString().getBytes());
+                                                                    System.out.println(found);
+                                                                    if(found) {
+                                                                        map.replace(key, Integer.toString(c));
+                                                                        FileOutputStream clear = activity.openFileOutput("destinationList-" + fileName, Context.MODE_PRIVATE);
+                                                                        clear.close();
+                                                                        FileOutputStream fos = activity.openFileOutput("destinationList-" + fileName, Context.MODE_APPEND);
+                                                                        for(Object dest : map.entrySet()) {
+                                                                            fos.write(dest.toString().concat("\n").getBytes());
+                                                                        }
+                                                                        fos.flush();
+                                                                        fos.close();
+                                                                    } else {
+                                                                        FileOutputStream clear = activity.openFileOutput("destinationList-" + fileName, Context.MODE_PRIVATE);
+                                                                        clear.close();
+                                                                        FileOutputStream fos = activity.openFileOutput("destinationList-" + fileName, Context.MODE_APPEND);
+                                                                        for (Object dest : map.entrySet()) {
+                                                                            fos.write(dest.toString().concat("\n").getBytes());
+                                                                        }
+                                                                        fos.write(markContent.getBytes());
+                                                                        fos.flush();
+                                                                        fos.close();
                                                                     }
-                                                                    fos.flush();
-                                                                    fos.close();
                                                                 } catch (FileNotFoundException e) {
                                                                     e.printStackTrace();
                                                                 } catch (IOException e) {
@@ -306,7 +329,12 @@ public class ManualTicket extends DialogFragment {
 
                                     try {
                                         FileOutputStream fos = activity.openFileOutput(fileName, Context.MODE_APPEND);
-                                        fos.write(content.getBytes());
+                                        String root = activity.getFilesDir().getPath();
+                                        if(new File(root, fileName).exists()) {
+                                            fos.write("\n".concat(content).getBytes());
+                                        } else {
+                                            fos.write(content.getBytes());
+                                        }
                                         fos.flush();
                                         fos.close();
                                         Toast.makeText(activity, "Manual Ticketing Successful!", Toast.LENGTH_SHORT).show();

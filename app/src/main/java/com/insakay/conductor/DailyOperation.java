@@ -131,18 +131,19 @@ public class DailyOperation extends AppCompatActivity {
     private void update() {
         dateName.clear();
         filenames.clear();
-        String pattern = "dd-MM-yy";
+        String pattern = "MM_dd_yy";
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
         String path =this.getFilesDir().getPath();
         File directory = new File(path);
         File[] files = directory.listFiles();
         for (int i = 0; i < files.length; i++) {
             String name = files[i].getName();
-            if(name.endsWith(".sky")) {
+            if(name.endsWith(".sky") && !name.startsWith("destinationList")) {
                 String[] temp = name.split("_");
+                String a = temp[1].concat("_").concat(temp[2]).concat("_").concat(temp[3]);
                 String raw = "";
                 try {
-                    raw = simpleDateFormat.parse(temp[1]).toString();
+                    raw = simpleDateFormat.parse(a).toString();
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }

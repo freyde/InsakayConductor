@@ -1,13 +1,17 @@
 package com.insakay.conductor;
 
 
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
@@ -19,15 +23,22 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
 import static android.content.Context.MODE_PRIVATE;
@@ -42,7 +53,9 @@ public class ScanFragment extends Fragment {
     private Button scan, manual;
     private ManualTicket manualTicketFragment;
     private AESencrp decryptor;
-    private String contents;
+    private String contents, UID, routeID, destination, markContent, fileName, coverage;
+    private Activity activity;
+
     public ScanFragment() {
         // Required empty public constructor
     }
@@ -57,8 +70,9 @@ public class ScanFragment extends Fragment {
 
         scan = (Button) mView.findViewById(R.id.scan_camera);
         manual = (Button) mView .findViewById(R.id.scan_manual);
-
+        decryptor = new AESencrp();
         manualTicketFragment = new ManualTicket();
+        activity = getActivity();
 
         scan.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -119,8 +133,115 @@ public class ScanFragment extends Fragment {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         String conductorID = SaveSharedPreference.getConductorID(getActivity().getApplicationContext());
-                                        String fileName = conductorID.concat("_").concat(curDate).concat(".sky");
+                                        fileName = conductorID.concat("_").concat(curDate).concat(".sky");
                                         String newContents ="";
+                                        destination = infos[4];
+                                        UID = SaveSharedPreference.getOpUID(activity.getApplicationContext());
+
+                                        FirebaseDatabase.getInstance().getReference("users/" + UID + "/routes")
+                                                .addListenerForSingleValueEvent(new ValueEventListener() {
+                                                    @Override
+                                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                                        for(DataSnapshot marks : dataSnapshot.getChildren()) {
+                                                            if(infos[2].equals(marks.child("routeName").getValue())) {
+                                                                routeID = marks.child("routeID").getValue().toString();
+                                                            }
+                                                        }
+                                                    }
+
+                                                    @Override
+                                                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                                    }
+                                                });
+
+                                        FirebaseDatabase.getInstance().getReference("users/" + UID + "/landmarks/" + routeID)
+                                                .addListenerForSingleValueEvent(new ValueEventListener() {
+                                                    @RequiresApi(api = Build.VERSION_CODES.N)
+                                                    @Override
+                                                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                                        for(DataSnapshot marks : dataSnapshot.getChildren()) {
+                                                            if(destination.equals(marks.child("landmarkName").getValue())) {
+                                                                String path = activity.getFilesDir().getPath();
+                                                                File a = new File(path, "destinationList-"+ fileName);
+                                                                coverage = marks.child("coverage").getValue().toString();
+                                                                markContent = destination +"_"+ coverage +"_"+ marks.child("coordinate").child("lat").getValue().toString() +"_"+ marks.child("coordinate").child("lng").getValue().toString() +"=1";
+                                                                if(!a.exists()) {
+                                                                    System.out.println("Wala pa!");
+                                                                    try {
+                                                                        FileOutputStream fos = activity.openFileOutput("destinationList-" + fileName, Context.MODE_APPEND);
+                                                                        fos.write(markContent.getBytes());
+                                                                        fos.flush();
+                                                                        fos.close();
+                                                                    } catch (FileNotFoundException e) {
+                                                                        e.printStackTrace();
+                                                                    } catch (IOException e) {
+                                                                        e.printStackTrace();
+                                                                    }
+                                                                } else {
+                                                                    System.out.println("Meron na!");
+                                                                    Boolean found = false;
+                                                                    HashMap<String, String> map = new HashMap<String, String>();
+                                                                    try {
+                                                                        BufferedReader reader = new BufferedReader(
+                                                                                new InputStreamReader(
+                                                                                        activity.openFileInput("destinationList-"+ fileName)));
+                                                                        String line = "", key="";
+                                                                        int c = 0;
+                                                                        while ((line = reader.readLine()) != null) {
+                                                                            String[] info = line.split("=");
+                                                                            if(info.length > 1) {
+                                                                                System.out.println("Array: "+ info[0]);
+                                                                                String[] r = info[0].split("_");
+                                                                                if(r[0].equals(destination)) {
+                                                                                    found = true;
+                                                                                    key = info[0];
+                                                                                    c = Integer.parseInt(info[1]) + 1;
+
+                                                                                }
+                                                                                map.put(info[0], info[1]);
+                                                                            }
+                                                                        }
+                                                                        System.out.println(found);
+                                                                        if(found) {
+                                                                            map.replace(key, Integer.toString(c));
+                                                                            FileOutputStream clear = activity.openFileOutput("destinationList-" + fileName, Context.MODE_PRIVATE);
+                                                                            clear.close();
+                                                                            FileOutputStream fos = activity.openFileOutput("destinationList-" + fileName, Context.MODE_APPEND);
+                                                                            for(Object dest : map.entrySet()) {
+                                                                                fos.write(dest.toString().concat("\n").getBytes());
+                                                                            }
+                                                                            fos.flush();
+                                                                            fos.close();
+                                                                        } else {
+                                                                            FileOutputStream clear = activity.openFileOutput("destinationList-" + fileName, Context.MODE_PRIVATE);
+                                                                            clear.close();
+                                                                            FileOutputStream fos = activity.openFileOutput("destinationList-" + fileName, Context.MODE_APPEND);
+                                                                            for (Object dest : map.entrySet()) {
+                                                                                fos.write(dest.toString().concat("\n").getBytes());
+                                                                            }
+                                                                            fos.write(markContent.getBytes());
+                                                                            fos.flush();
+                                                                            fos.close();
+                                                                        }
+                                                                    } catch (FileNotFoundException e) {
+                                                                        e.printStackTrace();
+                                                                    } catch (IOException e) {
+                                                                        e.printStackTrace();
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+
+                                                    @Override
+                                                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                                    }
+                                                });
+
+
+
                                         try {
                                             String root = getActivity().getFilesDir().getPath();
                                             if(new File(root, fileName).exists()) {
