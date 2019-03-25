@@ -85,7 +85,7 @@ public class DailyOperation extends AppCompatActivity {
                             Uri file = Uri.fromFile(new File(DailyOperation.this.getFilesDir(), fName));
 
                             String opUID = SaveSharedPreference.getOpUID(getApplicationContext());
-                            StorageReference operatorDirectory = storageReference.child(opUID +"/daily_reports/"+ fName);
+                            StorageReference operatorDirectory = storageReference.child(opUID +"/daily_reports/"+ fName.replace(".sky", ".csv"));
                             operatorDirectory.putFile(file)
                             .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                                 @Override

@@ -58,7 +58,7 @@ public class MarkingsFragment extends Fragment {
         try {
             String path = getActivity().getFilesDir().getPath();
 
-            File a = new File(path, fileName);
+            File a = new File(path, "destinationList-"+ fileName);
             if(a.exists()) {
                 BufferedReader lineCounter = new BufferedReader(
                                                 new InputStreamReader(
@@ -71,39 +71,37 @@ public class MarkingsFragment extends Fragment {
                 }
                 lineCounter.close();
                 String line;
-                if(arrLength > 0) {
-                    landmarkNames = new String[arrLength];
-                    landmarkCoverage = new String[arrLength];
-                    passengers = new Integer[arrLength];
-                    FileInputStream fis2 = getActivity().openFileInput("destinationList-" + fileName);
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(fis2));
-                    while ((line = reader.readLine()) != null) {
-                        String[] main = line.split("=");
-                        String[] datas = main[0].split(", ");
-                        landmarkNames[count] = datas[0];
-                        landmarkCoverage[count] = datas[1];
-                        passengers[count] = Integer.parseInt(main[1]);
-                        count++;
+                landmarkNames = new String[arrLength];
+                landmarkCoverage = new String[arrLength];
+                passengers = new Integer[arrLength];
+                FileInputStream fis2 = getActivity().openFileInput("destinationList-" + fileName);
+                BufferedReader reader = new BufferedReader(new InputStreamReader(fis2));
+                while ((line = reader.readLine()) != null) {
+                    String[] main = line.split("=");
+                    String[] datas = main[0].split(", ");
+                    landmarkNames[count] = datas[0];
+                    landmarkCoverage[count] = datas[1];
+                    passengers[count] = Integer.parseInt(main[1]);
+                    count++;
 
-                    }
-                    reader.close();
-                    fis2.close();
+                }
+                reader.close();
+                fis2.close();
 
-                    finalLandmarkNames = resizeArray(landmarkNames, count);
-                    finalLandmarkCoverage = resizeArray(landmarkCoverage, count);
-                    finalPassengers = resizeArray(passengers, count);
+                finalLandmarkNames = resizeArray(landmarkNames, count);
+                finalLandmarkCoverage = resizeArray(landmarkCoverage, count);
+                finalPassengers = resizeArray(passengers, count);
 
-                    System.out.println("final: " + finalPassengers.length);
-
-                    CustomListViewAdapter markings = new CustomListViewAdapter(getActivity(), finalLandmarkNames, finalLandmarkCoverage, finalPassengers);
-                    markings.notifyDataSetChanged();
-                    listView.setAdapter(markings);
+                CustomListViewAdapter markings = new CustomListViewAdapter(getActivity(), finalLandmarkNames, finalLandmarkCoverage, finalPassengers);
+                markings.notifyDataSetChanged();
+                listView.setAdapter(markings);
+                if(finalLandmarkNames.length > 0) {
                     noMarkings.setVisibility(View.INVISIBLE);
                 } else {
-                    listView.setVisibility(View.VISIBLE);
+                    listView.setVisibility(View.INVISIBLE);
                 }
             }  else {
-                listView.setVisibility(View.VISIBLE);
+                listView.setVisibility(View.INVISIBLE);
             }
 
         } catch (FileNotFoundException e) {
