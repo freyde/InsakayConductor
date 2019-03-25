@@ -17,11 +17,13 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -84,12 +86,14 @@ public class DailyOperation extends AppCompatActivity {
                         public void onClick(DialogInterface dialog, int which) {
                             Uri file = Uri.fromFile(new File(DailyOperation.this.getFilesDir(), fName));
 
-                            String opUID = SaveSharedPreference.getOpUID(getApplicationContext());
+                            final String opUID = SaveSharedPreference.getOpUID(getApplicationContext());
                             StorageReference operatorDirectory = storageReference.child(opUID +"/daily_reports/"+ fName.replace(".sky", ".csv"));
                             operatorDirectory.putFile(file)
                             .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                                 @Override
                                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                    String conductorID = SaveSharedPreference.getConductorID(getApplicationContext());
+                                    FirebaseDatabase.getInstance().getReference("users/"+ opUID +"/reports/"+ conductorID).push().child("fileName").setValue(fName.replace(".sky", ".csv"));
                                     Toast.makeText(DailyOperation.this, "Upload Successful.", Toast.LENGTH_SHORT).show();
                                 }
                             })

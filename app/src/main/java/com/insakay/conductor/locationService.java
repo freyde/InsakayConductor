@@ -47,13 +47,14 @@ public class locationService extends Service {
     private HashMap<String, String> coordinate = new HashMap<String, String>();
     private List<String> markingsList = new ArrayList<String>();
     private NotificationManagerCompat notificationManager;
+    private Context context;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
         createNotificationChannel();
-
+//        context = getApplicationContext();
         notificationManager = NotificationManagerCompat.from(getApplicationContext());
 
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -101,7 +102,7 @@ public class locationService extends Service {
                                 Double[] curLoc = new Double[]{location.getLatitude(), location.getLongitude()};
                                 Double[] marking = new Double[]{Double.parseDouble(datas[2]), Double.parseDouble(datas[3])};
                                 if (getDistance(curLoc, marking) <= 50D) {
-                                    sendNotification();
+                                    sendNotification(datas[0], main[1]);
                                     updated = true;
                                 } else {
                                     markingsList.add(line);
@@ -200,11 +201,11 @@ public class locationService extends Service {
         }
     }
 
-    public void sendNotification() {
+    public void sendNotification(String landmark, String passCount) {
         Notification notification = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_1_ID)
                 .setSmallIcon(R.drawable.ic_notify)
                 .setContentTitle("Embark Notification")
-                .setContentText("A passenger need to embark.")
+                .setContentText(passCount +" passenger need to embark at "+ landmark)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
                 .build();
