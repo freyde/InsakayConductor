@@ -38,12 +38,12 @@ public class SignOutFragment extends DialogFragment {
                         final Context context = getActivity().getApplicationContext();
                         String key = SaveSharedPreference.getConductorKey(context);
                         String opUID = SaveSharedPreference.getOpUID(context);
-                        getActivity().stopService(new Intent(getActivity(), locationService.class));
                         getActivity().finish();
                         HashMap<String, Integer> status = new HashMap<String, Integer>();
                         status.put("status", 0);
                         FirebaseDatabase.getInstance().getReference("users/" + opUID + "/conductors/" + key + "/status").setValue(0);
                         SaveSharedPreference.logout(context);
+                        getActivity().stopService(new Intent(getActivity(), locationService.class));
                         startActivity(new Intent(getActivity(), LoginActivity.class));
                     }
                 })

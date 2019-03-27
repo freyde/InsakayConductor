@@ -112,7 +112,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         spinnerView.setAdapter(dataAdapter);
         spinnerView.setOnItemSelectedListener(this);
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
@@ -392,16 +393,14 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                                             for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                                                 if (mPhone.equals(snapshot.child("phoneNo").getValue())) {
                                                     found = true;
-                                                    System.out.println(snapshot.child("status").getValue().toString());
-                                                    if(snapshot.child("status").getValue().toString().equals("0")) {
-                                                        conductorKey = snapshot.getKey();
-                                                        if (mPassword.equals(snapshot.child("password").getValue())) {
+                                                    if (mPassword.equals(snapshot.child("password").getValue())) {
+                                                        correct = true;
+                                                        if(snapshot.child("status").getValue().toString().equals("0")) {
+                                                            conductorKey = snapshot.getKey();
                                                             conductorID = snapshot.child("conductorNo").getValue().toString();
-                                                            startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                                                            correct = true;
+                                                        } else {
+                                                            alreadyLogged = true;
                                                         }
-                                                    } else {
-                                                        alreadyLogged = true;
                                                     }
                                                     break;
                                                 }
@@ -443,20 +442,21 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             if (!busFound) {
                 mBusView.setError(getString(R.string.unregistered_bus));
                 mBusView.requestFocus();
-            } if (alreadyLogged) {
-                mPhoneView.setError(getString(R.string.already_logged_in));
-                mPhoneView.requestFocus();
-            } else if (!found) {
+            }  else if (!found) {
                 mPhoneView.setError(getString(R.string.unregister_phone));
                 mPhoneView.requestFocus();
-            } else if (!correct) {
+            }  else if (!correct) {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();
+            }else if (alreadyLogged) {
+                mPhoneView.setError(getString(R.string.already_logged_in));
+                mPhoneView.requestFocus();
             } else if (found && correct && busFound) {
                 SaveSharedPreference.setAccountCredentials(getApplicationContext(), conductorID, opUID, opID, mBusView.getText().toString(), conductorKey);
                 HashMap<String, Integer> status = new HashMap<String, Integer>();
                 status.put("status", 1);
                 FirebaseDatabase.getInstance().getReference("users/" + opUID + "/conductors/" + conductorKey + "/status").setValue(1);
+                startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 //Destroy Login Activity
                 finish();
             }

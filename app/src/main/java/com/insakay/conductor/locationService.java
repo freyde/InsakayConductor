@@ -54,7 +54,7 @@ public class locationService extends Service {
         super.onCreate();
 
         createNotificationChannel();
-//        context = getApplicationContext();
+        context = getApplicationContext();
         notificationManager = NotificationManagerCompat.from(getApplicationContext());
 
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -236,6 +236,6 @@ public class locationService extends Service {
     private String setFileName() {
         SimpleDateFormat dateFormat = new SimpleDateFormat("MM_dd_yy");
         String date = dateFormat.format(new Date());
-        return SaveSharedPreference.getConductorID(getApplicationContext()).concat("_").concat(date).concat(".sky");
+        return SaveSharedPreference.getConductorID(context).concat("_").concat(date).concat(".sky");
     }
 }
