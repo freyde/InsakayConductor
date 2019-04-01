@@ -2,8 +2,6 @@ package com.insakay.conductor;
 
 
 import android.app.Activity;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,14 +11,11 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
@@ -40,9 +35,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 
-import static android.content.Context.CLIPBOARD_SERVICE;
-import static android.content.Context.MODE_PRIVATE;
-
 
 /**
  * A simple {@link Fragment} subclass.
@@ -53,7 +45,7 @@ public class ScanFragment extends Fragment {
     private Button scan, manual;
     private ManualTicket manualTicketFragment;
     private AESencrp decryptor;
-    private String contents, UID, routeID, destination, markContent, fileName, coverage;
+    private String contents, UID, routeID, destination, markContent, fileName, coverage, newContents;
     private Activity activity;
 
     public ScanFragment() {
@@ -134,7 +126,6 @@ public class ScanFragment extends Fragment {
                                     public void onClick(DialogInterface dialog, int which) {
                                         String conductorID = SaveSharedPreference.getConductorID(getActivity().getApplicationContext());
                                         fileName = conductorID.concat("_").concat(curDate).concat(".sky");
-                                        String newContents ="";
                                         destination = infos[4];
                                         UID = SaveSharedPreference.getOpUID(activity.getApplicationContext());
 
@@ -229,6 +220,23 @@ public class ScanFragment extends Fragment {
                                                                     } catch (IOException e) {
                                                                         e.printStackTrace();
                                                                     }
+                                                                    try {
+                                                                        String root = getActivity().getFilesDir().getPath();
+                                                                        if(new File(root, fileName).exists()) {
+                                                                            newContents = "\n".concat(infos[1] +", "+ infos[2] +", "+ infos[3] +", "+ infos[4] +", "+ infos[6]);
+                                                                        } else {
+                                                                            newContents = infos[1] +", "+ infos[2] +", "+ infos[3] +", "+ infos[4] +", "+ infos[6];
+                                                                        }
+                                                                        FileOutputStream fos = getActivity().openFileOutput(fileName, Context.MODE_APPEND);
+                                                                        fos.write(newContents.getBytes());
+                                                                        fos.flush();
+                                                                        fos.close();
+                                                                        Toast.makeText(getContext(), "QR Verified", Toast.LENGTH_LONG).show();
+                                                                    } catch (FileNotFoundException e) {
+                                                                        e.printStackTrace();
+                                                                    } catch (IOException e) {
+                                                                        e.printStackTrace();
+                                                                    }
                                                                 }
                                                             }
                                                         }
@@ -239,28 +247,6 @@ public class ScanFragment extends Fragment {
 
                                                     }
                                                 });
-
-
-
-                                        try {
-                                            String root = getActivity().getFilesDir().getPath();
-                                            if(new File(root, fileName).exists()) {
-                                                newContents = "\n".concat(infos[1] +", "+ infos[2] +", "+ infos[3] +", "+ infos[4] +", "+ infos[6]);
-                                            } else {
-                                                newContents = infos[1] +", "+ infos[2] +", "+ infos[3] +", "+ infos[4] +", "+ infos[6];
-                                            }
-                                            FileOutputStream fos = getActivity().openFileOutput(fileName, Context.MODE_APPEND);
-                                            fos.write(newContents.getBytes());
-                                            fos.flush();
-                                            fos.close();
-                                            Toast.makeText(getContext(), "QR Verified", Toast.LENGTH_LONG).show();
-                                        } catch (FileNotFoundException e) {
-                                            e.printStackTrace();
-                                        } catch (IOException e) {
-                                            e.printStackTrace();
-                                        }
-
-
                                     }
                                 }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                             @Override

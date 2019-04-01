@@ -12,8 +12,9 @@ public class SaveSharedPreference {
         return PreferenceManager.getDefaultSharedPreferences(context);
     }
 
-    public static void setAccountCredentials(Context context, String conductorID, String operatorUID, String operatorID, String busID, String conductorKey) {
+    public static void setAccountCredentials(Context context,String conductorName, String conductorID, String operatorUID, String operatorID, String busID, String conductorKey) {
         SharedPreferences.Editor editor = getSharedPreferences(context).edit();
+        editor.putString("CONDUCTOR_NAME", conductorName);
         editor.putString("CONDUCTOR_ID", conductorID);
         editor.putString("OPERATOR_UID", operatorUID);
         editor.putString("OPERATOR_ID", operatorID);
@@ -30,6 +31,10 @@ public class SaveSharedPreference {
 
     public static String getBusID(Context context) {
         return getSharedPreferences(context).getString("BUS_ID", null);
+    }
+
+    public static String getConductorName(Context context) {
+        return getSharedPreferences(context).getString("CONDUCTOR_NAME", null);
     }
 
     public static String getConductorID(Context context) {

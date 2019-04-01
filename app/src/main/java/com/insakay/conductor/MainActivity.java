@@ -1,7 +1,6 @@
 package com.insakay.conductor;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.LocationListener;
@@ -20,6 +19,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -61,10 +61,6 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, DailyOperation.class));
                 return true;
 
-            case  R.id.viewFiles:
-                startActivity(new Intent(this, ViewFiles.class));
-                return true;
-
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -81,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
 
         //Start Location Service Updater
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -146,5 +143,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         setFragment(locationFragment);
+        mMainNav.setSelectedItemId(R.id.nav_location);
     }
 }

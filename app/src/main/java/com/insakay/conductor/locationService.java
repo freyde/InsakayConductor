@@ -159,7 +159,7 @@ public class locationService extends Service {
             return;
         }
 
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000, 0, locationListener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, locationListener);
 
     }
 
@@ -202,10 +202,15 @@ public class locationService extends Service {
     }
 
     public void sendNotification(String landmark, String passCount) {
+        String mes;
+        if(Integer.parseInt(passCount) > 1)
+            mes = " passengers need to embark at ";
+        else
+            mes = " passenger need to embark at ";
         Notification notification = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_1_ID)
                 .setSmallIcon(R.drawable.ic_notify)
                 .setContentTitle("Embark Notification")
-                .setContentText(passCount +" passenger need to embark at "+ landmark)
+                .setContentText(passCount + mes + landmark)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
                 .build();

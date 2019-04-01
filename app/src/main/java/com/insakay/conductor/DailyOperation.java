@@ -85,15 +85,16 @@ public class DailyOperation extends AppCompatActivity {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             Uri file = Uri.fromFile(new File(DailyOperation.this.getFilesDir(), fName));
-
+                            final String conductorName = SaveSharedPreference.getConductorName(getApplicationContext());
                             final String opUID = SaveSharedPreference.getOpUID(getApplicationContext());
+                            final HashMap<String, String> name = new HashMap<String, String>();
                             StorageReference operatorDirectory = storageReference.child(opUID +"/daily_reports/"+ fName.replace(".sky", ".csv"));
                             operatorDirectory.putFile(file)
                             .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                                 @Override
                                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                                     String conductorID = SaveSharedPreference.getConductorID(getApplicationContext());
-                                    FirebaseDatabase.getInstance().getReference("users/"+ opUID +"/reports/"+ conductorID).push().child("fileName").setValue(fName.replace(".sky", ".csv"));
+                                    FirebaseDatabase.getInstance().getReference("users/"+ opUID +"/reports/"+ conductorName.replace(" ", "_").replace(".", "-")).push().child("fileName").setValue(fName.replace(".sky", ".csv"));
                                     Toast.makeText(DailyOperation.this, "Upload Successful.", Toast.LENGTH_SHORT).show();
                                 }
                             })

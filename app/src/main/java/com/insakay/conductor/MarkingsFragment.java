@@ -77,8 +77,10 @@ public class MarkingsFragment extends Fragment {
                 FileInputStream fis2 = getActivity().openFileInput("destinationList-" + fileName);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(fis2));
                 while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
                     String[] main = line.split("=");
-                    String[] datas = main[0].split(", ");
+                    String[] datas = main[0].split("_");
+                    System.out.println(datas);
                     landmarkNames[count] = datas[0];
                     landmarkCoverage[count] = datas[1];
                     passengers[count] = Integer.parseInt(main[1]);
