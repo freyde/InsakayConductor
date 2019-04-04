@@ -62,7 +62,7 @@ public class MarkingsFragment extends Fragment {
             if(a.exists()) {
                 BufferedReader lineCounter = new BufferedReader(
                                                 new InputStreamReader(
-                                                    getActivity().openFileInput(fileName)));
+                                                    getActivity().openFileInput("destinationList-"+ fileName)));
                 String temp;
 
                 while ((temp = lineCounter.readLine()) != null) {

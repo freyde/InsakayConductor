@@ -90,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
             // for ActivityCompat#requestPermissions for more details.
         }
         Intent locationIntent = new Intent(this, locationService.class);
+
         startService(locationIntent);
 
 

@@ -101,7 +101,7 @@ public class locationService extends Service {
                                 String[] datas = main[0].split("_");
                                 Double[] curLoc = new Double[]{location.getLatitude(), location.getLongitude()};
                                 Double[] marking = new Double[]{Double.parseDouble(datas[2]), Double.parseDouble(datas[3])};
-                                if (getDistance(curLoc, marking) <= 50D) {
+                                if (getDistance(curLoc, marking) <= 100D) {
                                     sendNotification(datas[0], main[1]);
                                     updated = true;
                                 } else {
@@ -167,18 +167,20 @@ public class locationService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
 //        return super.onStartCommand(intent, flags, startId);
         System.out.println("Service started");
-        Toast.makeText(this, "Service Started", Toast.LENGTH_LONG);
-        return START_STICKY;
+        return START_REDELIVER_INTENT;
     }
 
     @Override
     public void onDestroy() {
 
-        Toast.makeText(this, "Service Destroyed", Toast.LENGTH_LONG);
-        if(locationManager != null) {
-            locationManager.removeUpdates(locationListener);
-            FirebaseDatabase.getInstance().getReference("onOperation/" + conductorID).removeValue();
-        }
+//        Toast.makeText(this, "Service Destroyed", Toast.LENGTH_LONG);
+//        if(locationManager != null) {
+//            locationManager.removeUpdates(locationListener);
+//
+//        }
+        super.onDestroy();
+        Intent restartService = new Intent("RestartService");
+        sendBroadcast(restartService);
     }
 
     @Nullable
