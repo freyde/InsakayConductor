@@ -93,8 +93,12 @@ public class DailyOperation extends AppCompatActivity {
                             .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                                 @Override
                                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                    String conductorID = SaveSharedPreference.getConductorID(getApplicationContext());
-                                    FirebaseDatabase.getInstance().getReference("users/"+ opUID +"/reports/"+ conductorName.replace(" ", "_").replace(".", "-")).push().child("fileName").setValue(fName.replace(".sky", ".csv"));
+//                                    String conductorID = SaveSharedPreference.getConductorID(getApplicationContext());
+                                    String[] a = fName.split("_");
+                                    String[] b = a[3].split("\\.");
+                                    String date = a[1]+"-"+a[2]+"-"+b[0];
+
+                                    FirebaseDatabase.getInstance().getReference("users/"+ opUID +"/reports/"+ conductorName.replace(" ", "_").replace(".", "-") +"/"+ date +"/fileName").setValue(fName.replace(".sky", ".csv"));
                                     Toast.makeText(DailyOperation.this, "Upload Successful.", Toast.LENGTH_SHORT).show();
                                 }
                             })
@@ -141,9 +145,10 @@ public class DailyOperation extends AppCompatActivity {
         String path =this.getFilesDir().getPath();
         File directory = new File(path);
         File[] files = directory.listFiles();
+        String condID = SaveSharedPreference.getConductorID(getApplicationContext());
         for (int i = 0; i < files.length; i++) {
             String name = files[i].getName();
-            if(name.endsWith(".sky") && !name.startsWith("destinationList")) {
+            if(name.endsWith(".sky") && name.startsWith(condID)) {
                 String[] temp = name.split("_");
                 String a = temp[1].concat("_").concat(temp[2]).concat("_").concat(temp[3]);
                 String raw = "";

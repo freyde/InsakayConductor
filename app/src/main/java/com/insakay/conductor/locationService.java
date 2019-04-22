@@ -42,7 +42,7 @@ public class locationService extends Service {
     public static final String CHANNEL_1_ID = "channel";
     private LocationManager locationManager;
     private LocationListener locationListener;
-    private String conductorID, busID, operatorID, fileName;
+    private String conductorID, conductorName, busID, busPlate, busDriver, operatorID, fileName;
     private Boolean loggedIn, updated;
     private HashMap<String, String> coordinate = new HashMap<String, String>();
     private List<String> markingsList = new ArrayList<String>();
@@ -68,24 +68,37 @@ public class locationService extends Service {
 
                 operatorID = SaveSharedPreference.getOpUID(getApplicationContext());
                 busID = SaveSharedPreference.getBusID(getApplicationContext());
+                busPlate = SaveSharedPreference.getBusPlate(getApplicationContext());
+                busDriver = SaveSharedPreference.getBusDriver(getApplicationContext());
                 conductorID = SaveSharedPreference.getConductorID(getApplicationContext());
+                conductorName = SaveSharedPreference.getConductorName(getApplicationContext());
                 loggedIn = SaveSharedPreference.isLoggedIn(getApplicationContext());
 
-                fileName = setFileName();
+
 
                 if(location != null && conductorID != "" && loggedIn) {
+                    fileName = setFileName();
                     //Update Location On Firebase
 
                     //Prepare Datas
+                    SimpleDateFormat timeFormat = new SimpleDateFormat("MM_dd_yy_HH:mm");
+                    String time = timeFormat.format(new Date());
+
                     coordinate.put("lat", Double.toString(location.getLatitude()));
                     coordinate.put("long", Double.toString(location.getLongitude()));
                     coordinate.put("conductorID", conductorID);
+                    coordinate.put("conductorName", conductorName);
                     coordinate.put("operatorID", operatorID);
                     coordinate.put("busID", busID);
+                    coordinate.put("busPlate", busPlate);
+                    coordinate.put("busDriver", busDriver);
+                    coordinate.put("time", time);
 
                     //Initialize Firebase and Update
                     FirebaseDatabase.getInstance().getReference("onOperation/" + conductorID).setValue(coordinate);
 
+
+                    //Comparing of current location to the list of marked destination
                     updated = false;
                     markingsList.clear();
                     String path = getFilesDir().getPath();
@@ -179,8 +192,6 @@ public class locationService extends Service {
 //
 //        }
         super.onDestroy();
-        Intent restartService = new Intent("RestartService");
-        sendBroadcast(restartService);
     }
 
     @Nullable

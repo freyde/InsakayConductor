@@ -67,7 +67,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private ArrayList<String> list;
     private HashMap<String, String> operators;
     private Boolean found, correct, busFound, alreadyLogged;
-    private String conductorID, opUID, opID, conductorKey, conductorName;
+    private String conductorID, opUID, opID, conductorKey, conductorName, busID, busPlate, busDriver;
     private ArrayAdapter<String> dataAdapter;
 
 
@@ -386,38 +386,40 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                             fBase = snapshot.child("busNo").getValue().toString();
                             if(busID.equals(snapshot.child("busNo").getValue().toString())) {
                                 busFound = true;
+                                busPlate = snapshot.child("plateNo").getValue().toString();
+                                busDriver = snapshot.child("driverName").getValue().toString();
+
+                                FirebaseDatabase.getInstance().getReference("users/" + opUID + "/conductors")
+                                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                                                    if (mPhone.equals(snapshot.child("phoneNo").getValue())) {
+                                                        found = true;
+                                                        if (mPassword.equals(snapshot.child("password").getValue())) {
+                                                            correct = true;
+                                                            if(snapshot.child("status").getValue().toString().equals("0")) {
+                                                                conductorKey = snapshot.getKey();
+                                                                conductorID = snapshot.child("conductorNo").getValue().toString();
+                                                                conductorName = snapshot.child("name").getValue().toString();
+                                                                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                                                            } else {
+                                                                alreadyLogged = true;
+                                                            }
+                                                        }
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
+                                            @Override
+                                            public void onCancelled(DatabaseError databaseError) {
+                                            }
+                                        });
+
                                 break;
                             }
                         }
-
-                        FirebaseDatabase.getInstance().getReference("users/" + opUID + "/conductors")
-                                .addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(DataSnapshot dataSnapshot) {
-                                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                                            if (mPhone.equals(snapshot.child("phoneNo").getValue())) {
-                                                found = true;
-                                                if (mPassword.equals(snapshot.child("password").getValue())) {
-                                                    correct = true;
-                                                    if(snapshot.child("status").getValue().toString().equals("0")) {
-                                                        conductorKey = snapshot.getKey();
-                                                        conductorID = snapshot.child("conductorNo").getValue().toString();
-                                                        conductorName = snapshot.child("name").getValue().toString();
-                                                    } else {
-                                                        alreadyLogged = true;
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onCancelled(DatabaseError databaseError) {
-                                    }
-                                });
-
-
                     }
 
                     @Override
@@ -457,11 +459,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 mPhoneView.setError(getString(R.string.already_logged_in));
                 mPhoneView.requestFocus();
             } else if (found && correct && busFound) {
-                SaveSharedPreference.setAccountCredentials(getApplicationContext(),conductorName, conductorID, opUID, opID, mBusView.getText().toString(), conductorKey);
+                busID = mBusView.getText().toString();
+                SaveSharedPreference.setAccountCredentials(getApplicationContext(),conductorName, conductorID, opUID, opID, busID, busPlate, busDriver, conductorKey);
                 HashMap<String, Integer> status = new HashMap<String, Integer>();
                 status.put("status", 1);
                 FirebaseDatabase.getInstance().getReference("users/" + opUID + "/conductors/" + conductorKey + "/status").setValue(1);
-                startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 //Destroy Login Activity
                 finish();
             }
