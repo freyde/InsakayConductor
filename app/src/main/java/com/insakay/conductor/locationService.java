@@ -114,7 +114,7 @@ public class locationService extends Service {
                                 String[] datas = main[0].split("_");
                                 Double[] curLoc = new Double[]{location.getLatitude(), location.getLongitude()};
                                 Double[] marking = new Double[]{Double.parseDouble(datas[2]), Double.parseDouble(datas[3])};
-                                if (getDistance(curLoc, marking) <= 100D) {
+                                if (getDistance(curLoc, marking) <= 150D) {
                                     sendNotification(datas[0], main[1]);
                                     updated = true;
                                 } else {
@@ -217,9 +217,9 @@ public class locationService extends Service {
     public void sendNotification(String landmark, String passCount) {
         String mes;
         if(Integer.parseInt(passCount) > 1)
-            mes = " passengers need to embark at ";
+            mes = " passengers need to disembark at ";
         else
-            mes = " passenger need to embark at ";
+            mes = " passenger need to disembark at ";
         Notification notification = new NotificationCompat.Builder(getApplicationContext(), CHANNEL_1_ID)
                 .setSmallIcon(R.drawable.ic_notify)
                 .setContentTitle("Embark Notification")

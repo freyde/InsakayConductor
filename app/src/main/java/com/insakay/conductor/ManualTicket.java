@@ -1,11 +1,13 @@
 package com.insakay.conductor;
 
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -51,16 +53,18 @@ import java.util.List;
 public class ManualTicket extends DialogFragment {
 
     private View view;
-    private Spinner routeSpinner, originSpinner, destinationSpinner;
+    private Spinner routeSpinner, originSpinner, destinationSpinner, categorySpinner;
     private List<String> routeList, landmarksList;
-    private ArrayAdapter<String> routeAdapter, landmarksAdapter;
+    private ArrayAdapter<String> routeAdapter, landmarksAdapter, categoryAdapter;
     private HashMap<String, String> routeHash, landmarksHash, landmarksCov;
 //    private String[] routeArr, landmarkArr;
-    private String UID, operator, route, origin, destination, curDate, fileName, content, routeID, originCov, destinationCov, fare, markContent, coverage;
+    private String UID, operator, route, origin, destination, curDate, fileName, content, routeID, originCov, destinationCov, fare, markContent, coverage, category;
     private Boolean found;
     private TextView fareView;
+    private int fareInt = 0;
 
 
+    @SuppressLint("ResourceType")
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
@@ -72,10 +76,11 @@ public class ManualTicket extends DialogFragment {
         routeSpinner = (Spinner) view.findViewById(R.id.spinner_route);
         originSpinner = (Spinner) view.findViewById(R.id.spinner_origin);
         destinationSpinner = (Spinner) view.findViewById(R.id.spinner_destination);
+        categorySpinner = (Spinner) view.findViewById(R.id.spinner_category);
         fareView = (TextView) view.findViewById(R.id.fareView);
 
 
-        routeList = new ArrayList<>();
+        routeList = new ArrayList<String>();
         routeHash = new HashMap<String, String>();
         landmarksList = new ArrayList<>();
         landmarksHash = new HashMap<String, String>();
@@ -96,6 +101,10 @@ public class ManualTicket extends DialogFragment {
 
         originSpinner.setAdapter(landmarksAdapter);
         destinationSpinner.setAdapter(landmarksAdapter);
+
+        categoryAdapter = new ArrayAdapter<String>(getActivity().getBaseContext(), android.R.layout.simple_spinner_item, getResources().getStringArray(R.array.category));
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        categorySpinner.setAdapter(categoryAdapter);
 
         originSpinner.setEnabled(false);
         destinationSpinner.setEnabled(false);
@@ -155,6 +164,7 @@ public class ManualTicket extends DialogFragment {
                 route = routeSpinner.getSelectedItem().toString();
                 destination = destinationSpinner.getSelectedItem().toString();
                 origin = parent.getItemAtPosition(position).toString();
+                category = categorySpinner.getSelectedItem().toString();
                 if(!destination.equals("Select Landmark")) {
                     routeID = routeHash.get(route);
                     originCov = landmarksCov.get(origin);
@@ -165,9 +175,21 @@ public class ManualTicket extends DialogFragment {
                                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                     System.out.println(dataSnapshot);
                                     System.out.println(destinationCov);
-                                    String fare = dataSnapshot.child(destinationCov).getValue().toString();
-                                    System.out.println(fare);
-                                    fareView.setText("Fare: Php. " + fare);
+                                    String fareString = dataSnapshot.child(destinationCov).getValue().toString();
+                                    double fareDouble = Integer.parseInt(fareString);
+                                    double discount = 0D;
+                                    fareInt = Integer.parseInt(fareString);
+                                    if(!category.equals("Regular")) {
+                                        System.out.println(fareDouble);
+                                        discount = (int) (fareDouble * 0.2D);
+                                        fareInt = (int) (fareDouble - discount);
+                                        System.out.println(fareInt);
+                                        fareView.setText("Fare: Php. " + Double.toString(fareInt));
+                                        fare = Integer.toString(fareInt);
+                                    } else {
+                                        fareView.setText("Fare: Php. " + fareString);
+                                        fare = fareString;
+                                    }
                                 }
 
                                 @Override
@@ -190,7 +212,8 @@ public class ManualTicket extends DialogFragment {
                 route = routeSpinner.getSelectedItem().toString();
                 origin = originSpinner.getSelectedItem().toString();
                 destination = parent.getItemAtPosition(position).toString();
-                if(!destination.equals("Select Landmark")) {
+                category = categorySpinner.getSelectedItem().toString();
+                if(!origin.equals("Select Landmark")) {
                     routeID = routeHash.get(route);
                     originCov = landmarksCov.get(origin);
                     destinationCov = landmarksCov.get(destination);
@@ -200,9 +223,23 @@ public class ManualTicket extends DialogFragment {
                             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                 System.out.println(dataSnapshot);
                                 System.out.println(destinationCov);
-                                fare = dataSnapshot.child(destinationCov).getValue().toString();
-                                System.out.println(fare);
-                                fareView.setText("Fare: Php. " + fare);
+                                String fareString = dataSnapshot.child(destinationCov).getValue().toString();
+                                double fareDouble = Integer.parseInt(fareString);
+                                double discount = 0D;
+                                fareInt = Integer.parseInt(fareString);
+                                System.out.println(category);
+                                if(!category.equals("Regular")) {
+                                    System.out.println(fareDouble);
+                                    discount = (int) (fareDouble * 0.2D);
+                                    fareInt = (int) (fareDouble - discount);
+                                    System.out.println(fareInt);
+                                    fareView.setText("Fare: Php. " + Double.toString(fareInt));
+                                    fare = Integer.toString(fareInt);
+                                } else {
+                                    fareView.setText("Fare: Php. " + fareString);
+                                    fare = fareString;
+                                }
+
                             }
 
                             @Override
@@ -210,6 +247,51 @@ public class ManualTicket extends DialogFragment {
 
                             }
                         });
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+        categorySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                route = routeSpinner.getSelectedItem().toString();
+                origin = originSpinner.getSelectedItem().toString();
+                destination = destinationSpinner.getSelectedItem().toString();
+                category = parent.getItemAtPosition(position).toString();
+                if(origin != "Select Landmark" && destination != "Select Landmark" && category != "Regular") {
+                    FirebaseDatabase.getInstance().getReference("users/"+ UID +"/fares/"+ routeID +"/matrix/"+ originCov)
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    System.out.println(dataSnapshot);
+                                    System.out.println(destinationCov);
+                                    String fareString = dataSnapshot.child(destinationCov).getValue().toString();
+                                    double fareDouble = Integer.parseInt(fareString);
+                                    double discount = 0D;
+                                    fareInt = Integer.parseInt(fareString);
+                                    if(!category.equals("Regular")) {
+                                        System.out.println(fareDouble);
+                                        discount = (int) (fareDouble * 0.2D);
+                                        fareInt = (int) (fareDouble - discount);
+                                        System.out.println(fareInt);
+                                        fareView.setText("Fare: Php. " + Double.toString(fareInt));
+                                        fare = Integer.toString(fareInt);
+                                    } else {
+                                        fareView.setText("Fare: Php. " + fareString);
+                                        fare = fareString;
+                                    }
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                }
+                            });
                 }
             }
 
@@ -240,7 +322,7 @@ public class ManualTicket extends DialogFragment {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                                     operator = dataSnapshot.child("shortName").getValue().toString();
-                                    content = operator.concat(", ").concat(route).concat(", ").concat(origin).concat(", ").concat(destination).concat(", ").concat(fare);
+                                    content = operator.concat(", ").concat(route).concat(", ").concat(origin).concat(", ").concat(destination).concat(", ").concat(fare).concat(", ").concat(category).concat(", Manual, ").concat(curDate);
 
                                     FirebaseDatabase.getInstance().getReference("users/" + UID + "/landmarks/" + routeID)
                                             .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -327,14 +409,47 @@ public class ManualTicket extends DialogFragment {
                                                 }
                                             });
 
+                                    int total = 0;
+                                    int count = 0;
+                                    ArrayList<String> temp = new ArrayList<String>();
                                     try {
+                                        BufferedReader reader = new BufferedReader(
+                                                new InputStreamReader(
+                                                        activity.openFileInput(fileName)));
+                                        String line = "";
+                                        int c = 0;
+                                        while ((line = reader.readLine()) != null) {
+                                            String[] ab = line.split(", ");
+                                            if(ab.length != 2) {
+                                                temp.add(line);
+                                                total += Integer.parseInt(ab[4]);
+                                                count++;
+                                                System.out.println(total + ", " + count);
+                                            }
+                                        }
+                                    } catch (FileNotFoundException e) {
+                                        e.printStackTrace();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+
+
+                                    try {
+                                        FileOutputStream clear = activity.openFileOutput(fileName, Context.MODE_PRIVATE);
+                                        clear.close();
                                         FileOutputStream fos = activity.openFileOutput(fileName, Context.MODE_APPEND);
                                         String root = activity.getFilesDir().getPath();
                                         if(new File(root, fileName).exists()) {
-                                            fos.write("\n".concat(content).getBytes());
-                                        } else {
-                                            fos.write(content.getBytes());
+                                            for(String z : temp) {
+                                                fos.write((z.concat("\n")).getBytes());
+                                            }
                                         }
+
+                                        fos.write((content.concat("\n")).getBytes());
+                                        total += Integer.parseInt(fare);
+                                        count++;
+                                        String totalS = "Total Fare: " + Integer.toString(total) +", Passenger Count: "+ Integer.toString(count);
+                                        fos.write(totalS.getBytes());
                                         fos.flush();
                                         fos.close();
                                         Toast.makeText(activity, "Manual Ticketing Successful!", Toast.LENGTH_SHORT).show();

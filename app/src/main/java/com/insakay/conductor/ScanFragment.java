@@ -32,6 +32,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -45,7 +46,7 @@ public class ScanFragment extends Fragment {
     private Button scan, manual;
     private ManualTicket manualTicketFragment;
     private AESencrp decryptor;
-    private String contents, UID, routeID, destination, markContent, fileName, coverage, newContents;
+    private String contents, UID, routeID, destination, markContent, fileName, coverage, newContents, curDate, details;
     private Activity activity;
 
     public ScanFragment() {
@@ -102,7 +103,7 @@ public class ScanFragment extends Fragment {
                 contents = decryptor.decrypt(result.getContents());
                 if (result != null && result.getContents() != null) {
                     final SimpleDateFormat dateFormat = new SimpleDateFormat("MM_dd_yy");
-                    final String curDate = dateFormat.format(new Date());
+                    curDate = dateFormat.format(new Date());
                     final String[] infos = contents.split("\\.");
                     System.out.println(contents);
                     if (infos.length > 1) {
@@ -113,17 +114,32 @@ public class ScanFragment extends Fragment {
                                 p = infos[7];
                             else
                                 p = infos[7] + "php";
+
+                            if (!infos[6].equals("Regular")) {
+                                details = "Operator: " + infos[1] +
+                                        "\nRoute: " + infos[2] +
+                                        "\nOrigin: " + infos[3] +
+                                        "\nDestination: " + infos[4] +
+                                        "\nCategory: " + infos[6] +
+                                        "\nFare: " + p +
+                                        "\nDiscounted Fare: " + infos[10] + " php" +
+                                        "\nPaid Amount: " + infos[8] +
+                                        "\nChange: " + infos[9] + " php";
+                            } else {
+                                details = "Operator: " + infos[1] +
+                                        "\nRoute: " + infos[2] +
+                                        "\nOrigin: " + infos[3] +
+                                        "\nDestination: " + infos[4] +
+                                        "\nCategory: " + infos[6] +
+                                        "\nFare: " + p +
+                                        "\nPaid Amount: " + infos[8] +
+                                        "\nChange: " + infos[9] + " php";
+                            }
+
+
                             new AlertDialog.Builder(getActivity())
                                     .setTitle("Ticket Information")
-                                    .setMessage(
-                                            "Operator: " + infos[1] +
-                                                    "\nRoute: " + infos[2] +
-                                                    "\nOrigin: " + infos[3] +
-                                                    "\nDestination: " + infos[4] +
-                                                    "\nFare: " + infos[6] + " php" +
-                                                    "\nPayment: " + p +
-                                                    "\nChange: " + infos[8] + " php"
-                                    )
+                                    .setMessage(details)
                                     .setPositiveButton("Verify", new DialogInterface.OnClickListener() {
                                         @Override
                                         public void onClick(DialogInterface dialog, int which) {
@@ -227,15 +243,48 @@ public class ScanFragment extends Fragment {
                                                                             e.printStackTrace();
                                                                         }
                                                                         //All Scanned File-------------------------------------------------------------------------------------------------
+                                                                        int total = 0;
+                                                                        int count = 0;
+                                                                        ArrayList<String> temp = new ArrayList<String>();
+                                                                        try {
+                                                                            BufferedReader reader = new BufferedReader(
+                                                                                    new InputStreamReader(
+                                                                                            activity.openFileInput(fileName)));
+                                                                            String line = "";
+                                                                            int c = 0;
+                                                                            while ((line = reader.readLine()) != null) {
+                                                                                String[] ab = line.split(", ");
+                                                                                if(ab.length != 2) {
+                                                                                    temp.add(line);
+                                                                                    total += Integer.parseInt(ab[4]);
+                                                                                    count++;
+                                                                                    System.out.println(total + ", " + count);
+                                                                                }
+                                                                            }
+                                                                        } catch (FileNotFoundException e) {
+                                                                            e.printStackTrace();
+                                                                        } catch (IOException e) {
+                                                                            e.printStackTrace();
+                                                                        }
+
+
                                                                         try {
                                                                             String root = getActivity().getFilesDir().getPath();
-                                                                            if (new File(root, fileName).exists()) {
-                                                                                newContents = "\n".concat(infos[1] + ", " + infos[2] + ", " + infos[3] + ", " + infos[4] + ", " + infos[6]);
-                                                                            } else {
-                                                                                newContents = infos[1] + ", " + infos[2] + ", " + infos[3] + ", " + infos[4] + ", " + infos[6];
-                                                                            }
+                                                                            FileOutputStream clear = getActivity().openFileOutput(fileName, Context.MODE_PRIVATE);
+                                                                            clear.close();
                                                                             FileOutputStream fos = getActivity().openFileOutput(fileName, Context.MODE_APPEND);
+                                                                            if (new File(root, fileName).exists()) {
+                                                                                for(String z : temp) {
+
+                                                                                    fos.write((z.concat("\n")).getBytes());
+                                                                                }
+                                                                            }
+                                                                            newContents = infos[1] + ", " + infos[2] + ", " + infos[3] + ", " + infos[4] + ", " + infos[7] + ", " + infos[6] + ", Scan, " + curDate + "\n";
                                                                             fos.write(newContents.getBytes());
+                                                                            total += Integer.parseInt(infos[7]);
+                                                                            count++;
+                                                                            String totalS = "Total Fare: " + Integer.toString(total) +", Passenger Count: "+ Integer.toString(count);
+                                                                            fos.write(totalS.getBytes());
                                                                             fos.flush();
                                                                             fos.close();
                                                                             Toast.makeText(getContext(), "QR Verified", Toast.LENGTH_LONG).show();
