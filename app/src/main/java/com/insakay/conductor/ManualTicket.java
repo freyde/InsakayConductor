@@ -19,6 +19,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -63,6 +64,8 @@ public class ManualTicket extends DialogFragment {
     private TextView fareView;
     private int fareInt = 0;
 
+    private Button a;
+
 
     @SuppressLint("ResourceType")
     @NonNull
@@ -78,7 +81,7 @@ public class ManualTicket extends DialogFragment {
         destinationSpinner = (Spinner) view.findViewById(R.id.spinner_destination);
         categorySpinner = (Spinner) view.findViewById(R.id.spinner_category);
         fareView = (TextView) view.findViewById(R.id.fareView);
-
+        a = (Button) view.findViewById(R.id.map);
 
         routeList = new ArrayList<String>();
         routeHash = new HashMap<String, String>();
@@ -437,7 +440,7 @@ public class ManualTicket extends DialogFragment {
                                     try {
                                         FileOutputStream clear = activity.openFileOutput(fileName, Context.MODE_PRIVATE);
                                         clear.close();
-                                        FileOutputStream fos = activity.openFileOutput(fileName, Context.MODE_APPEND);
+                                            FileOutputStream fos = activity.openFileOutput(fileName, Context.MODE_APPEND);
                                         String root = activity.getFilesDir().getPath();
                                         if(new File(root, fileName).exists()) {
                                             for(String z : temp) {
